@@ -1,21 +1,15 @@
-#![feature(link_cfg)]
-#![no_main]
-#![no_std]
+use async_std::net::UdpSocket;
+use std::io::Result;
 
-extern crate panic_abort;
-use libc::{c_void, write, STDOUT_FILENO};
+#[async_std::main]
+async fn main() -> Result<()> {
+    println!("adfasdf");
+    let socket = UdpSocket::bind("127.0.0.1:8080").await?;
+    let mut buf = vec![0u8; 1024];
 
-#[no_mangle]
-pub extern "C" fn main() {
-    unsafe {
-        write(
-            STDOUT_FILENO,
-            b"hello world\n".as_ptr() as *const c_void,
-            12,
-        );
+    loop {
+        let (n, peer) = socket.recv_from(&mut buf).await?;
+        socket.send_to(&buf[..n], &peer).await?;
     }
+    Ok(())
 }
-
-#[link(name = "c", kind = "static", cfg(target_feature = "crt-static"))]
-#[link(name = "c", cfg(not(target_feature = "crt-static")))]
-extern "C" {}
